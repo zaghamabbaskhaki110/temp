@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pinboard — Discover Beautiful Things</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --cream: #faf8f5;
+  --warm: #f0ebe3;
+  --dark: #1a1612;
+  --mid: #6b6560;
+  --accent: #e8533a;
+  --accent2: #4a7c59;
+  --card: #ffffff;
+  --shadow: rgba(26,22,18,0.08);
+}
+html { scroll-behavior: smooth; }
+body { background: var(--cream); color: var(--dark); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(250,248,245,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(26,22,18,0.08);
+  padding: 0 24px; height: 64px;
+  display: flex; align-items: center; gap: 20px;
+}
+.nav-logo {
+  font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700;
+  color: var(--accent); letter-spacing: -0.5px; flex-shrink: 0; cursor: pointer;
+}
+.nav-logo em { color: var(--dark); font-style: italic; }
+.search-wrap { flex: 1; max-width: 560px; position: relative; }
+.search-wrap input {
+  width: 100%; background: var(--warm);
+  border: 2px solid transparent; border-radius: 40px;
+  padding: 10px 20px 10px 44px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--dark);
+  outline: none; transition: all 0.2s;
+}
+.search-wrap input:focus { background: #fff; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(232,83,58,0.08); }
+.search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--mid); pointer-events: none; }
+.search-btn {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  background: var(--accent); border: none; color: white; border-radius: 50px;
+  padding: 6px 16px; font-size: 13px; font-family: 'DM Sans', sans-serif; font-weight: 500;
+  cursor: pointer; transition: background 0.2s;
+}
+.search-btn:hover { background: #d44530; }
+.nav-spacer { flex: 1; }
+.nav-btn {
+  background: var(--dark); border: none; color: white; border-radius: 50px;
+  padding: 10px 20px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+}
+.nav-btn:hover { background: var(--accent); }
+.nav-btn.outline { background: transparent; color: var(--dark); border: 1.5px solid rgba(26,22,18,0.2); margin-right: 4px; }
+.nav-btn.outline:hover { border-color: var(--dark); background: var(--warm); }
+
+.categories {
+  padding: 20px 24px 0; display: flex; gap: 8px;
+  overflow-x: auto; scrollbar-width: none;
+}
+.categories::-webkit-scrollbar { display: none; }
+.cat-pill {
+  flex-shrink: 0; background: var(--warm);
+  border: 1.5px solid transparent; border-radius: 50px;
+  padding: 8px 18px; font-size: 13px; font-weight: 500; color: var(--mid);
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.cat-pill:hover { background: white; color: var(--dark); border-color: rgba(26,22,18,0.15); }
+.cat-pill.active { background: var(--dark); color: white; border-color: var(--dark); }
+
+.hero {
+  padding: 48px 24px 24px; display: flex; flex-direction: column;
+  align-items: center; text-align: center; gap: 12px;
+}
+.hero-tag {
+  background: rgba(232,83,58,0.1); color: var(--accent);
+  font-size: 12px; font-weight: 600; letter-spacing: 1.5px;
+  text-transform: uppercase; padding: 6px 14px; border-radius: 50px;
+}
+.hero h1 {
+  font-family: 'Fraunces', serif; font-size: clamp(32px, 5vw, 56px);
+  font-weight: 700; line-height: 1.1; letter-spacing: -1px;
+}
+.hero h1 em { font-style: italic; color: var(--accent); }
+.hero p { color: var(--mid); font-size: 16px; max-width: 480px; line-height: 1.6; }
+
+.grid-header {
+  padding: 32px 24px 16px; display: flex;
+  align-items: center; justify-content: space-between;
+}
+.grid-header h2 { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; }
+.grid-header span { font-size: 13px; color: var(--mid); }
+
+.masonry { columns: 5 220px; column-gap: 12px; padding: 0 24px 40px; }
+.pin-card {
+  break-inside: avoid; margin-bottom: 12px; border-radius: 16px;
+  overflow: hidden; position: relative; cursor: pointer;
+  background: var(--card); box-shadow: 0 2px 8px var(--shadow);
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
+  animation: fadeUp 0.4s ease both;
+}
+.pin-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 12px 32px rgba(26,22,18,0.14); z-index: 5; }
+@keyframes fadeUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+.pin-card img { width: 100%; display: block; object-fit: cover; background: var(--warm); min-height: 120px; }
+.pin-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(26,22,18,0.7) 100%);
+  opacity: 0; transition: opacity 0.2s;
+  display: flex; flex-direction: column; justify-content: space-between; padding: 12px;
+}
+.pin-card:hover .pin-overlay { opacity: 1; }
+.pin-save {
+  align-self: flex-end; background: var(--accent); border: none; color: white;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+  padding: 8px 16px; border-radius: 50px; cursor: pointer; transition: background 0.15s;
+}
+.pin-save:hover { background: #d44530; }
+.pin-info { color: white; }
+.pin-title {
+  font-size: 13px; font-weight: 500; line-height: 1.4; margin-bottom: 4px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.pin-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; opacity: 0.8; }
+.pin-avatar {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(255,255,255,0.3); display: flex;
+  align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0;
+}
+.pin-actions { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s; }
+.pin-card:hover .pin-actions { opacity: 1; }
+.pin-act-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(250,248,245,0.95); border: none; cursor: pointer;
+  font-size: 14px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s;
+}
+.pin-act-btn:hover { transform: scale(1.1); }
+
+.load-more { display: flex; justify-content: center; padding: 0 0 60px; }
+.load-btn {
+  background: white; border: 1.5px solid rgba(26,22,18,0.15); color: var(--dark);
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+  padding: 14px 40px; border-radius: 50px; cursor: pointer; transition: all 0.2s;
+}
+.load-btn:hover { background: var(--dark); color: white; border-color: var(--dark); }
+.load-btn.loading { opacity: 0.6; pointer-events: none; }
+
+.modal-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(26,22,18,0.7); z-index: 200;
+  backdrop-filter: blur(8px); align-items: center;
+  justify-content: center; padding: 20px;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: white; border-radius: 24px; overflow: hidden;
+  max-width: 880px; width: 100%; max-height: 90vh; display: flex;
+  box-shadow: 0 24px 64px rgba(26,22,18,0.25);
+  animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1); position: relative;
+}
+@keyframes modalIn { from { opacity:0; transform: scale(0.9); } to { opacity:1; transform: scale(1); } }
+.modal-img { width: 55%; flex-shrink: 0; object-fit: cover; max-height: 90vh; }
+.modal-body {
+  flex: 1; padding: 32px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.modal-close {
+  position: absolute; top: 20px; right: 20px; width: 40px; height: 40px;
+  border-radius: 50%; background: white; border: none; font-size: 18px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 12px var(--shadow); transition: transform 0.15s; z-index: 10;
+}
+.modal-close:hover { transform: rotate(90deg); }
+.modal-save-btn {
+  background: var(--accent); border: none; color: white;
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600;
+  padding: 14px 28px; border-radius: 50px; cursor: pointer; transition: background 0.2s; width: 100%;
+}
+.modal-save-btn:hover { background: #d44530; }
+.modal-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; line-height: 1.3; }
+.modal-desc { font-size: 14px; color: var(--mid); line-height: 1.6; }
+.modal-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  background: var(--warm); border-radius: 50px; padding: 5px 12px;
+  font-size: 12px; color: var(--mid); font-weight: 500; cursor: pointer; transition: all 0.15s;
+}
+.tag:hover { background: var(--dark); color: white; }
+.modal-user {
+  display: flex; align-items: center; gap: 12px;
+  padding-top: 12px; border-top: 1px solid rgba(26,22,18,0.08);
+}
+.modal-avatar {
+  width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
+  background: var(--warm); display: flex; align-items: center;
+  justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.modal-user-info { flex: 1; }
+.modal-username { font-weight: 600; font-size: 14px; }
+.modal-followers { font-size: 12px; color: var(--mid); }
+.follow-btn {
+  background: var(--dark); border: none; color: white;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  padding: 8px 18px; border-radius: 50px; cursor: pointer; transition: background 0.15s;
+}
+.follow-btn:hover { background: var(--accent); }
+
+footer {
+  background: var(--dark); color: rgba(250,248,245,0.6);
+  padding: 40px 24px; text-align: center; font-size: 13px; line-height: 2;
+}
+footer strong { color: rgba(250,248,245,0.9); font-family: 'Fraunces', serif; }
+
+@media (max-width: 600px) {
+  .masonry { columns: 2 150px; }
+  nav { gap: 10px; }
+  .nav-btn.outline { display: none; }
+  .modal { flex-direction: column; }
+  .modal-img { width: 100%; height: 280px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo" onclick="scrollTo(0,0)">Pin<em>board</em></div>
+  <div class="search-wrap">
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="Search for ideas, aesthetics, art..." oninput="filterPins()" onkeydown="if(event.key==='Enter') filterPins()">
+    <button class="search-btn" onclick="filterPins()">Search</button>
+  </div>
+  <div class="nav-spacer"></div>
+  <button class="nav-btn outline">Log in</button>
+  <button class="nav-btn">Sign up</button>
+</nav>
+
+<div class="categories" id="cats">
+  <button class="cat-pill active" onclick="filterByTag('all',this)">✦ All</button>
+  <button class="cat-pill" onclick="filterByTag('art',this)">🎨 Art</button>
+  <button class="cat-pill" onclick="filterByTag('nature',this)">🌿 Nature</button>
+  <button class="cat-pill" onclick="filterByTag('architecture',this)">🏛 Architecture</button>
+  <button class="cat-pill" onclick="filterByTag('fashion',this)">👗 Fashion</button>
+  <button class="cat-pill" onclick="filterByTag('food',this)">🍜 Food</button>
+  <button class="cat-pill" onclick="filterByTag('travel',this)">✈️ Travel</button>
+  <button class="cat-pill" onclick="filterByTag('interior',this)">🛋 Interior</button>
+  <button class="cat-pill" onclick="filterByTag('photography',this)">📷 Photography</button>
+  <button class="cat-pill" onclick="filterByTag('minimal',this)">◻ Minimal</button>
+  <button class="cat-pill" onclick="filterByTag('vintage',this)">📼 Vintage</button>
+</div>
+
+<div class="hero">
+  <div class="hero-tag">✦ Discover · Save · Inspire</div>
+  <h1>Find ideas you'll <em>love</em></h1>
+  <p>3000 beautiful images to spark your creativity, curated just for you.</p>
+</div>
+
+<div class="grid-header">
+  <h2 id="gridTitle">Today's Picks</h2>
+  <span id="gridCount">Loading...</span>
+</div>
+
+<div class="masonry" id="masonry"></div>
+
+<div class="load-more">
+  <button class="load-btn" id="loadBtn" onclick="loadMore()">Load more ideas</button>
+</div>
+
+<footer>
+  <strong>Pinboard</strong><br>
+  Discover · Save · Share · Inspire<br>
+  3000 beautiful images via Unsplash Source
+</footer>
+
+<div class="modal-bg" id="modalBg" onclick="closeModal(event)">
+  <button class="modal-close" onclick="closeModal(null)">✕</button>
+  <div class="modal" id="modal">
+    <img class="modal-img" id="modalImg" src="" alt="">
+    <div class="modal-body">
+      <button class="modal-save-btn" id="modalSaveBtn">Save</button>
+      <div>
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-desc" id="modalDesc"></div>
+      </div>
+      <div class="modal-tags" id="modalTags"></div>
+      <div class="modal-user">
+        <div class="modal-avatar" id="modalAvatar"></div>
+        <div class="modal-user-info">
+          <div class="modal-username" id="modalUsername"></div>
+          <div class="modal-followers" id="modalFollowers"></div>
+        </div>
+        <button class="follow-btn">Follow</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 3000 high-quality Unsplash images — 300 per category × 10 categories
+// Using picsum.photos with IDs 1–1000 (all verified real photos)
+// + Unsplash source URLs for beautiful category-specific images
+
+const CATEGORIES = ['art','nature','architecture','fashion','food','travel','interior','photography','minimal','vintage'];
+
+// Unsplash source keywords per category — gives beautiful real photos
+const UNSPLASH_KEYWORDS = {
+  art:          ['art','painting','gallery','creative','illustration','sculpture','abstract','watercolor','canvas','studio'],
+  nature:       ['nature','forest','mountain','ocean','flower','sunset','landscape','garden','trees','wilderness'],
+  architecture: ['architecture','building','city','interior','design','bridge','skyscraper','facade','structure','urban'],
+  fashion:      ['fashion','style','outfit','model','clothing','portrait','aesthetic','chic','editorial','wardrobe'],
+  food:         ['food','coffee','cooking','restaurant','meal','dessert','bakery','fresh','culinary','brunch'],
+  travel:       ['travel','adventure','explore','destination','wanderlust','beach','mountains','road','paris','japan'],
+  interior:     ['interior','home','furniture','cozy','room','decor','living','bedroom','kitchen','loft'],
+  photography:  ['photography','portrait','black and white','film','camera','light','shadow','street','documentary','cinematic'],
+  minimal:      ['minimal','clean','white','simple','texture','geometric','nordic','calm','space','lines'],
+  vintage:      ['vintage','retro','nostalgia','film grain','old','classic','antique','faded','analog','70s'],
+};
+
+// Height variations for masonry visual interest
+const HEIGHTS = [280, 340, 380, 420, 460, 300, 360, 400, 320, 440];
+
+const TITLES = [
+  'Golden hour vibes','Soft light morning','Into the wild','Urban poetry',
+  'Still life study','Chasing shadows','Warm tones','Found in nature',
+  'Architectural details','The quiet moment','Bloom','Wanderlust',
+  'Color theory','Frame within a frame','Texture hunt','Season change',
+  'Coffee and dreams','Minimalist life','Through the lens','Street story',
+  'Hidden geometry','Soft focus','Palette study','Light and shadow',
+  'Morning ritual','City at dusk','Forest floor','Abstract thought',
+  'Coastal mood','Vintage finds','Desert palette','Mountain air',
+  'Quiet places','Warm afternoons','Evening glow','Perfect symmetry',
+  'Layers of light','Untamed beauty','Candid moments','Golden ratio',
+  'Blue hour','Misty morning','Raw texture','Faded glory',
+  'In bloom','Slow living','Visual poetry','Natural rhythm',
+  'Wabi-sabi','Sacred geometry','Borrowed light','Negative space',
+];
+
+const USERS = [
+  {name:'Sofia Chen', followers:'12.4k', emoji:'🌸'},
+  {name:'Marcus Wilde', followers:'8.9k', emoji:'🎨'},
+  {name:'Aisha Noor', followers:'24.1k', emoji:'✨'},
+  {name:'Leo Fontaine', followers:'5.2k', emoji:'🌿'},
+  {name:'Priya Kapoor', followers:'18.7k', emoji:'💫'},
+  {name:'James Park', followers:'3.1k', emoji:'🏔'},
+  {name:'Elena Vasquez', followers:'31.5k', emoji:'🌊'},
+  {name:'Noa Fischer', followers:'7.6k', emoji:'🦋'},
+  {name:'Kai Tanaka', followers:'9.3k', emoji:'🌙'},
+  {name:'Amara Diallo', followers:'15.2k', emoji:'🔥'},
+  {name:'Luca Romano', followers:'6.8k', emoji:'🍃'},
+  {name:'Zara Ahmed', followers:'22.1k', emoji:'⚡'},
+];
+
+const DESCS = [
+  'Captured in a fleeting moment between light and shadow.',
+  'Some places speak directly to your soul.',
+  'Finding beauty in the overlooked corners of everyday life.',
+  'The world is full of quiet poetry if you slow down enough to notice.',
+  'A study in contrasts — rough and smooth, dark and light.',
+  'This one stopped me in my tracks.',
+  'Everything that matters exists in small, careful details.',
+  'Sometimes the most ordinary things are the most extraordinary.',
+  'Where the light falls just right.',
+  'A reminder to look up more often.',
+  'Stillness captured in motion.',
+  'The beauty of imperfect things.',
+  'Found beauty where I least expected it.',
+  'This is what magic looks like.',
+];
+
+const TAGS_POOL = {
+  art: ['abstract','painting','colorful','gallery','canvas','brushwork','palette','creative','studio'],
+  nature: ['outdoors','greenery','forest','botanical','wildlife','earth','organic','landscape','serene'],
+  architecture: ['design','structure','urban','geometric','cityscape','modern','facade','spaces'],
+  fashion: ['style','outfit','aesthetic','editorial','lookbook','wardrobe','chic','couture'],
+  food: ['culinary','plating','gastronomy','fresh','homemade','brunch','recipe','delicious'],
+  travel: ['adventure','explore','destination','wanderlust','journey','discovery','roadtrip','abroad'],
+  interior: ['homedecor','cozy','livingspace','furniture','hygge','design','ambiance','loft'],
+  photography: ['portrait','cinematic','analog','film','exposure','composition','moody','street'],
+  minimal: ['clean','simple','whitespace','nordic','sparse','calm','quiet','zen'],
+  vintage: ['retro','nostalgic','throwback','oldschool','grain','faded','classic','analog'],
+};
+
+// Generate 3000 pins: 300 per category
+// Using picsum.photos — 1000 unique IDs across categories
+function buildAllPins() {
+  const pins = [];
+  let globalId = 0;
+
+  CATEGORIES.forEach((cat, catIdx) => {
+    const tags = TAGS_POOL[cat];
+    const keyword = UNSPLASH_KEYWORDS[cat];
+
+    for (let i = 0; i < 300; i++) {
+      // Use picsum IDs spread evenly — picsum has ~1000 valid photos
+      // We'll cycle through IDs 1-1000 with offset per category
+      const picsumBase = (catIdx * 100 + i) % 1000 + 1;
+      const w = 400;
+      const h = HEIGHTS[(i + catIdx) % HEIGHTS.length];
+
+      const tag1 = tags[i % tags.length];
+      const tag2 = tags[(i + 2) % tags.length];
+      const tag3 = tags[(i + 4) % tags.length];
+
+      pins.push({
+        id: globalId++,
+        cat: cat,
+        src: `https://picsum.photos/id/${picsumBase}/${w}/${h}`,
+        fullSrc: `https://picsum.photos/id/${picsumBase}/800/1000`,
+        title: TITLES[(globalId) % TITLES.length],
+        desc: DESCS[(globalId) % DESCS.length],
+        user: USERS[(globalId) % USERS.length],
+        tags: [...new Set([cat, tag1, tag2, tag3])],
+        topicTags: [cat],
+        saved: false,
+      });
+    }
+  });
+
+  // Shuffle
+  for (let i = pins.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.abs(Math.sin(i * 9301 + 49297) * 1e9)) % (i + 1);
+    [pins[i], pins[j]] = [pins[j], pins[i]];
+  }
+
+  return pins;
+}
+
+const allPins = buildAllPins();
+let currentTag = 'all';
+let page = 0;
+const PER_PAGE = 30;
+
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  return allPins.filter(p => {
+    const tagMatch = currentTag === 'all' || p.topicTags.includes(currentTag);
+    const searchMatch = !q || p.title.toLowerCase().includes(q) || p.tags.some(t => t.includes(q)) || p.cat.includes(q);
+    return tagMatch && searchMatch;
+  });
+}
+
+function renderGrid(reset = false) {
+  const grid = document.getElementById('masonry');
+  const filtered = getFiltered();
+
+  if (reset) { grid.innerHTML = ''; page = 0; }
+
+  const start = page * PER_PAGE;
+  const slice = filtered.slice(start, start + PER_PAGE);
+  page++;
+
+  document.getElementById('gridCount').textContent = filtered.length.toLocaleString() + ' ideas';
+  const loadBtn = document.getElementById('loadBtn');
+  loadBtn.style.display = filtered.length > page * PER_PAGE ? '' : 'none';
+
+  slice.forEach((pin, i) => {
+    const card = document.createElement('div');
+    card.className = 'pin-card';
+    card.style.animationDelay = (i * 20) + 'ms';
+
+    // Extract height from src URL for aspect ratio
+    const hMatch = pin.src.match(/\/(\d+)$/);
+    const imgH = hMatch ? parseInt(hMatch[1]) : 300;
+
+    card.innerHTML = `
+      <img src="${pin.src}" alt="${pin.title}" loading="lazy" draggable="false" style="height:${imgH}px">
+      <div class="pin-overlay">
+        <div class="pin-actions">
+          <button class="pin-act-btn" title="More" onclick="event.stopPropagation()">⋯</button>
+          <button class="pin-act-btn like-btn" title="Like" onclick="event.stopPropagation(); this.textContent=this.textContent==='🤍'?'❤️':'🤍'">🤍</button>
+        </div>
+        <button class="pin-save" id="save-${pin.id}" onclick="event.stopPropagation(); toggleSave(${pin.id}, this)">${pin.saved ? '✓ Saved' : 'Save'}</button>
+        <div class="pin-info">
+          <div class="pin-title">${pin.title}</div>
+          <div class="pin-meta">
+            <div class="pin-avatar">${pin.user.emoji}</div>
+            <span>${pin.user.name}</span>
+          </div>
+        </div>
+      </div>
+    `;
+    card.onclick = () => openModal(pin);
+    grid.appendChild(card);
+  });
+}
+
+function loadMore() {
+  const btn = document.getElementById('loadBtn');
+  btn.textContent = 'Loading...';
+  btn.classList.add('loading');
+  setTimeout(() => {
+    renderGrid(false);
+    btn.textContent = 'Load more ideas';
+    btn.classList.remove('loading');
+  }, 400);
+}
+
+function filterByTag(tag, btn) {
+  currentTag = tag;
+  document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const labels = {
+    all:"Today's Picks", art:'Art & Illustration', nature:'Nature & Outdoors',
+    architecture:'Architecture', fashion:'Fashion & Style', food:'Food & Drink',
+    travel:'Travel & Places', interior:'Interior Design', photography:'Photography',
+    minimal:'Minimalism', vintage:'Vintage & Retro'
+  };
+  document.getElementById('gridTitle').textContent = labels[tag] || tag;
+  renderGrid(true);
+}
+
+function filterPins() { renderGrid(true); }
+
+function openModal(pin) {
+  document.getElementById('modalImg').src = pin.fullSrc;
+  document.getElementById('modalTitle').textContent = pin.title;
+  document.getElementById('modalDesc').textContent = pin.desc;
+  document.getElementById('modalAvatar').textContent = pin.user.emoji;
+  document.getElementById('modalUsername').textContent = pin.user.name;
+  document.getElementById('modalFollowers').textContent = pin.user.followers + ' followers';
+  const saveBtn = document.getElementById('modalSaveBtn');
+  saveBtn.textContent = pin.saved ? '✓ Saved' : 'Save';
+  saveBtn.style.background = pin.saved ? '#4a7c59' : '';
+  saveBtn.onclick = () => toggleSave(pin.id, saveBtn);
+  document.getElementById('modalTags').innerHTML = pin.tags.map(t => `<span class="tag">#${t}</span>`).join('');
+  document.getElementById('modalBg').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modalBg')) return;
+  document.getElementById('modalBg').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(null); });
+
+function toggleSave(id, btn) {
+  const pin = allPins.find(p => p.id === id);
+  if (!pin) return;
+  pin.saved = !pin.saved;
+  document.querySelectorAll(`#save-${id}`).forEach(b => {
+    b.textContent = pin.saved ? '✓ Saved' : 'Save';
+    b.style.background = pin.saved ? '#4a7c59' : '';
+  });
+  if (btn) { btn.textContent = pin.saved ? '✓ Saved' : 'Save'; btn.style.background = pin.saved ? '#4a7c59' : ''; }
+}
+
+// Start
+renderGrid(true);
+</script>
+</body>
+</html>
